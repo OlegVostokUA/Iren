@@ -1,3 +1,4 @@
+import datetime
 import httplib2
 import apiclient
 from oauth2client.service_account import ServiceAccountCredentials
@@ -24,7 +25,6 @@ def get_auth():
         filename=CREDENTIALS_FILE, scopes=SCOPES_CAL
     )
     service_calendar = apiclient.discovery.build('calendar', 'v3', credentials=credentials_calendar)
-
     ### google drive
     driveService = apiclient.discovery.build('drive', 'v3', http=httpAuth)  # Выбираем работу с Google Drive и 3 версию API
     access = driveService.permissions().create(
@@ -42,17 +42,24 @@ def read_calendar():
         'id': 'vostokukrdon@gmail.com'
     }
 
+    tomorrow_date = datetime.datetime.now() + datetime.timedelta(days=1)
+    tomorrow_date = tomorrow_date.strftime('%Y-%m-%d')
+
+    date1 = tomorrow_date+'T04:00:00Z'
+    date2 = tomorrow_date + 'T14:00:00Z'
+
     created_calendar_list_entry = service_calendar.calendarList().insert(body=calendar_list_entry).execute()
 
+    calendar_string = '94 ПРИКЗ:\n'
     page_token = None
     while True:
         events = service_calendar.events().list(
             calendarId='vostokukrdon@gmail.com',
-            timeMin='2021-06-03T10:00:00-07:00',
-            timeMax='2024-04-08T10:00:00-07:00',
+            timeMin=date1,
+            timeMax=date2,
             pageToken=page_token).execute()
-        for event in events['items']:
-            print(event['summary'])
+        for num, event in enumerate(events['items']):
+            calendar_string = calendar_string + str(num+1)+'. '+event['summary']+'\n'
         page_token = events.get('nextPageToken')
         if not page_token:
             break
@@ -68,8 +75,8 @@ def read_calendar():
     #calendar = service_calendar.calendars().get(calendarId='dm9zdG9rdWtyZG9uQGdtYWlsLmNvbQ').execute()
 
     #print(calendar['summary'])
+    return calendar_string
 
-read_calendar()
 
 def read_pidsobne():
     '''
@@ -83,11 +90,18 @@ def read_pidsobne():
                                                        valueRenderOption='FORMATTED_VALUE',
                                                        dateTimeRenderOption='FORMATTED_STRING').execute()
     sheet_values = results['valueRanges'][0]['values']
-    string_for_message = 'ПГ\n'
+    string_for_message = 'ПГ:\n'
     for i in sheet_values:
         string_for_message=string_for_message+i[0]+': '+i[1]+' кг / '+i[2]+' кг / '+i[3]+'%\n'
 
     return string_for_message
 
-# res = read_pidsobne()
-# print(res)
+def main_func_parce():
+    calendar_string = read_calendar()
+    pids_string = read_pidsobne()
+    result_fool = calendar_string+pids_string
+    result_min = calendar_string[10:]
+    return result_min, result_fool
+
+res_min, res_fool = main_func_parce()
+print(res_min, res_fool)
