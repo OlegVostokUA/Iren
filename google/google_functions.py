@@ -96,12 +96,16 @@ def read_pidsobne():
 
     return string_for_message
 
-def main_func_parce():
+def func_parce_foul():
     calendar_string = read_calendar()
     pids_string = read_pidsobne()
     result_fool = calendar_string+pids_string
-    result_min = calendar_string[10:]
-    return result_min, result_fool
+    return result_fool
 
-res_min, res_fool = main_func_parce()
-print(res_min, res_fool)
+
+def func_parce_short():
+    calendar_string = read_calendar()
+    result_min = calendar_string[10:]
+    return result_min
+
+
