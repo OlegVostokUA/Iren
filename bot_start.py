@@ -9,8 +9,9 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 import requests
-from keyboards import main_keyboard, task_keyboard
+from keyboards import main_keyboard, task_keyboard, parse_keyboard
 from google.google_functions import func_parce_foul, func_parce_short
+from parsing.parsing_functions import parse_prices
 
 from config import TOKEN
 
@@ -30,6 +31,7 @@ async def back_func(message: Message):
     await message.answer('Ok', reply_markup=main_keyboard)
 
 
+# tasks functions block
 @dp.message(Command('Tasks'))
 async def tasks_func(message: Message):
     await message.answer('Tasks parse menu', reply_markup=task_keyboard)
@@ -45,6 +47,18 @@ async def foul_tasks_func(message: Message):
 async def short_tasks_func(message: Message):
     text = func_parce_short()
     await message.answer(text, reply_markup=task_keyboard)
+
+
+# parser functions block
+@dp.message(Command('Parsers'))
+async def tasks_func(message: Message):
+    await message.answer('Tasks parse menu', reply_markup=parse_keyboard)
+
+
+@dp.message(Command('Prices'))
+async def foul_tasks_func(message: Message):
+    text_for_msg = parse_prices()
+    await message.answer(text_for_msg, reply_markup=parse_keyboard)
 
 
 # func for start bot

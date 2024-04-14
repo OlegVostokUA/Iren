@@ -41,8 +41,13 @@ def read_calendar():
     calendar_list_entry = {
         'id': 'vostokukrdon@gmail.com'
     }
+    now = datetime.datetime.now()
+    day_of_week = datetime.datetime.weekday(now)
+    if day_of_week == 5:
+        tomorrow_date = now + datetime.timedelta(days=2)
+    else:
+        tomorrow_date = now + datetime.timedelta(days=1)
 
-    tomorrow_date = datetime.datetime.now() + datetime.timedelta(days=1)
     tomorrow_date = tomorrow_date.strftime('%Y-%m-%d')
 
     date1 = tomorrow_date+'T04:00:00Z'
@@ -96,6 +101,7 @@ def read_pidsobne():
 
     return string_for_message
 
+
 def func_parce_foul():
     calendar_string = read_calendar()
     pids_string = read_pidsobne()
@@ -107,5 +113,3 @@ def func_parce_short():
     calendar_string = read_calendar()
     result_min = calendar_string[10:]
     return result_min
-
-
