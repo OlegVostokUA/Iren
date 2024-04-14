@@ -8,10 +8,11 @@ from google.oauth2 import service_account
 CREDENTIALS_FILE = 'vostok-419418-56fa2e5e41fe.json'  # Имя файла с закрытым ключом, вы должны подставить свое
 SCOPES_CAL = ["https://www.googleapis.com/auth/calendar"]
 
-def get_auth():
+def get_auth(id_file):
     '''
     Функция настройки аунтефикации
     '''
+    # id_file = id_file
     ### google sheet
     # Читаем ключи из файла
     credentials = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE,
@@ -19,7 +20,7 @@ def get_auth():
                                                                     'https://www.googleapis.com/auth/drive'])
     httpAuth = credentials.authorize(httplib2.Http())  # Авторизуемся в системе
     service = apiclient.discovery.build('sheets', 'v4', http=httpAuth)  # Выбираем работу с таблицами и 4 версию API
-    spreadsheetId = '1Uqp9zSn6QffhtKUEM5kEQ1BC7Vgj1OCZRYfEryhduYI'
+    spreadsheetId = id_file
     ### google calendar
     credentials_calendar = service_account.Credentials.from_service_account_file(
         filename=CREDENTIALS_FILE, scopes=SCOPES_CAL
@@ -36,7 +37,8 @@ def get_auth():
     return service, spreadsheetId, service_calendar
 
 def read_calendar():
-    service, spreadsheetId, service_calendar = get_auth()
+    id_file = '1Uqp9zSn6QffhtKUEM5kEQ1BC7Vgj1OCZRYfEryhduYI' # id pidsobne file
+    service, spreadsheetId, service_calendar = get_auth(id_file)
 
     calendar_list_entry = {
         'id': 'vostokukrdon@gmail.com'
@@ -68,18 +70,7 @@ def read_calendar():
         page_token = events.get('nextPageToken')
         if not page_token:
             break
-    # page_token = None
-    # while True:
-    #     calendar_list = service_calendar.calendarList().list(pageToken=page_token).execute()
-    #     for calendar_list_entry in calendar_list['items']:
-    #         print(calendar_list_entry)
-    #     page_token = calendar_list.get('nextPageToken')
-    #     if not page_token:
-    #         break
 
-    #calendar = service_calendar.calendars().get(calendarId='dm9zdG9rdWtyZG9uQGdtYWlsLmNvbQ').execute()
-
-    #print(calendar['summary'])
     return calendar_string
 
 
@@ -87,8 +78,9 @@ def read_pidsobne():
     '''
     Функция чтения файла по ПГ
     '''
-    service, spreadsheetId, service_calendar = get_auth()
-    ranges = ["Лист1!A1:D8"]  #
+    id_file = '1Uqp9zSn6QffhtKUEM5kEQ1BC7Vgj1OCZRYfEryhduYI'  # id pidsobne file
+    service, spreadsheetId, service_calendar = get_auth(id_file)
+    ranges = ["Лист1!A1:F8"]  #
 
     results = service.spreadsheets().values().batchGet(spreadsheetId=spreadsheetId,
                                                        ranges=ranges,
@@ -101,6 +93,36 @@ def read_pidsobne():
 
     return string_for_message
 
+def read_central():
+    '''
+    Функция чтения файла по централизовки
+    '''
+    id_file = '1QEAGgJmmMa53yTl2UM1-4r3a9Di5sJrUX_S7Qfq3mdM'  # id central file
+    service, spreadsheetId, service_calendar = get_auth(id_file)
+    ranges = ["Лист1!A1:E15"]  #
+
+    results = service.spreadsheets().values().batchGet(spreadsheetId=spreadsheetId,
+                                                       ranges=ranges,
+                                                       valueRenderOption='FORMATTED_VALUE',
+                                                       dateTimeRenderOption='FORMATTED_STRING').execute()
+    sheet_values = results['valueRanges'][0]['values']
+
+    # ['06.1.2/15817-24', '11.03.2024', 'ГЦКБРтаЗ', 'Дієтична добавка Гексавіт', '50000', 'прийом']
+    # ['06.1.2/13354-24', '29.02.2024', 'ГЦКБРтаЗ', 'Свинина заморожена', '1550', 'прийом']
+    # ['06.1.2/21672-24', '04.04.2024', '2144', 'Дієтична добавка Гексавіт', '25000', 'прийом']
+    # ['06.1.2/19617-24', '27.03.2024', 'ГЦКБРтаЗ', 'Блоки заморожені Свинина', '1400', 'прийом']
+    # ['06.1.2/19617-24', '27.03.2024', 'ГЦКБРтаЗ', 'Мясо птиці', '1000', 'прийом']
+    # ['06.1.2/19499-24', '26.03.2024', '2144', 'Молоко згущене з цукром', '150', 'прийом']
+    # ['06.1.2/21671-24', '04.04.2024', 'ГЦКБРтаЗ', 'Сало шпик', '700', 'прийом']
+
+    return sheet_values
+
+
+def func_parse_central():
+    result = read_central()
+    return result
+
+# func_parse_central()
 
 def func_parce_foul():
     calendar_string = read_calendar()

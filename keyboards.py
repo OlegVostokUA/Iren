@@ -3,6 +3,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 # main menu buttons
 button_tasks = KeyboardButton(text='/Tasks')
 button_parse = KeyboardButton(text='/Parsers')
+button_central = KeyboardButton(text='/Central')
 
 # task menu buttons
 button_task_foul = KeyboardButton(text='/Foul_tasks')
@@ -15,7 +16,7 @@ button_back = KeyboardButton(text='/<Back')
 
 # main menu constr
 main_keyboard = ReplyKeyboardMarkup(keyboard=[
-    [button_tasks, button_parse]
+    [button_tasks, button_parse, button_central] #
 ], resize_keyboard=True)
 
 # tasks menu constr
