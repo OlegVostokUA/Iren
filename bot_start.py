@@ -124,7 +124,10 @@ async def marks_parse_func(message: Message):
         marks.append(msg_line)
         count += 1
         sum = sum + i[2]
-    middle_mark = round(sum / count, 1)
+    try:
+        middle_mark = round(sum / count, 1)
+    except:
+        middle_mark = 0
     marks.append(f'\n{middle_mark}')
     text_for_msg = ''.join(marks)
     await message.answer(text_for_msg, reply_markup=food_intake_menu_admin)
