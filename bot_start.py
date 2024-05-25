@@ -122,13 +122,16 @@ async def marks_parse_func(message: Message):
     for i in data:
         msg_line = f'{i[3]} - {i[2]}\n'
         marks.append(msg_line)
-        count += 1
-        sum = sum + i[2]
+        if i[2] not in [1,2,3,4,5]:
+            continue
+        else:
+            count += 1
+            sum = sum + i[2]
     try:
         middle_mark = round(sum / count, 1)
     except:
         middle_mark = 0
-    marks.append(f'\n{middle_mark}')
+    marks.append(f'\nСередній бал: {middle_mark}')
     text_for_msg = ''.join(marks)
     await message.answer(text_for_msg, reply_markup=food_intake_menu_admin)
 
@@ -153,17 +156,29 @@ async def rated_food_start(message: Message, state: FSMContext):
 async def food_intake_load(message: Message, state: FSMContext):
     await state.update_data(food_intake=message.text)
     await state.set_state(FSMClientFoodRating.mark)
-    await message.answer('Оцініть прийом їжі від 1 до 5', reply_markup=food_marks_menu)
+    await message.answer('Оцініть прийом їжі від 1 до 5 за допомогою представлених клавіш', reply_markup=food_marks_menu)
 
 
 @dp.message(FSMClientFoodRating.mark)
 async def mark_load(message: Message, state: FSMContext):
-    await state.update_data(mark=int(message.text))
+    try:
+        await state.update_data(mark=int(message.text))
+    except:
+        await state.update_data(mark=0)
     data = await state.get_data()
-    data = (datetime.today().strftime("%d.%m.%Y"),) + tuple(data.values()) + (message.from_user.full_name,)
+    try:
+        name_tg = (message.from_user.full_name,)
+    except:
+        name_tg = ('UNKNOWN',)
+    data = (datetime.today().strftime("%d.%m.%Y"),) + tuple(data.values()) + name_tg
     add_to_db(data)
     await state.clear()
     await message.answer('Дякуємо за вашу оцінку.\nЦе дуже важливо для нас', reply_markup=main_keyboard_cl)
+
+
+@dp.message()
+async def echo_send(message: types.Message):
+    await message.answer('Вибачте, я Вас не розумію', reply_markup=main_keyboard_cl)
 
 
 # # # MAIN BLOCK # # #
