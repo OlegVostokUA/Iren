@@ -25,3 +25,8 @@ def read_db(food_intake):
     data_in = (datetime.today().strftime("%d.%m.%Y"),) + (food_intake,)
     data = cur.execute("""SELECT * FROM rating_food WHERE date == ? AND food_intake == ?""", data_in).fetchall()
     return data
+
+
+def select_marks():
+    data = cur.execute("""SELECT date, mark FROM rating_food""").fetchall()
+    return data

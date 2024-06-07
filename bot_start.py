@@ -16,7 +16,7 @@ from admin_keyboards import main_keyboard, task_keyboard, parse_keyboard, food_i
 from client_keyboards import main_keyboard_cl, food_intake_menu, food_marks_menu
 from google.google_functions import func_parce_foul, func_parce_short, func_parse_central
 from parsing.parsing_functions import parse_prices
-from database.sq_lite_db import sql_start, add_to_db, read_db
+from database.sq_lite_db import sql_start, add_to_db, read_db, select_marks
 
 from config import TOKEN
 
@@ -134,6 +134,29 @@ async def marks_parse_func(message: Message):
     marks.append(f'\nСередній бал: {middle_mark}')
     text_for_msg = ''.join(marks)
     await message.answer(text_for_msg, reply_markup=food_intake_menu_admin)
+
+
+@dp.message(Command('Marks_for_month'))
+async def middle_marks(message: Message):
+    data = select_marks()
+    date = data[0][0]
+    string_of_marks = ''
+    count = 0
+    mark = 0
+    for i in data:
+        if date == i[0]:
+            count += 1
+            mark += i[1]
+        else:
+            midle_mark = str(round(mark / count, 2))
+            string_of_marks + date + ': ' + midle_mark + '\n'
+            date = i[0]
+            count = 1
+            mark = 0
+            mark += i[1]
+    midle_mark = str(round(mark / count, 2))
+    string_of_marks += date + ': ' + midle_mark + '\n'
+    await message.answer(string_of_marks, reply_markup=food_intake_menu_admin)
 
 
 # # # CLIENT FUNCTIONS # # #
