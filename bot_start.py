@@ -149,7 +149,7 @@ async def middle_marks(message: Message):
             mark += i[1]
         else:
             midle_mark = str(round(mark / count, 2))
-            string_of_marks + date + ': ' + midle_mark + '\n'
+            string_of_marks += date + ': ' + midle_mark + '\n'
             date = i[0]
             count = 1
             mark = 0

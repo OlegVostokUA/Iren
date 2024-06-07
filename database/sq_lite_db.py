@@ -28,5 +28,7 @@ def read_db(food_intake):
 
 
 def select_marks():
-    data = cur.execute("""SELECT date, mark FROM rating_food""").fetchall()
+    dates = (datetime.now().replace(day=1).strftime('%d.%m.%Y'), datetime.now().strftime('%d.%m.%Y'))
+    # data = cur.execute("""SELECT date, mark FROM rating_food""").fetchall()
+    data = cur.execute("""SELECT date, mark FROM rating_food WHERE date BETWEEN ? AND ?""", dates).fetchall()
     return data
