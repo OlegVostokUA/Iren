@@ -4,6 +4,7 @@ import sys
 from datetime import datetime
 
 from aiogram import Bot, Dispatcher, F, types
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, FSInputFile
@@ -20,9 +21,10 @@ from database.sq_lite_db import sql_start, add_to_db, read_db, select_marks
 
 from config import TOKEN
 
+session = AiohttpSession(proxy='http://proxy.server:3128')
 
 storage = MemoryStorage()
-bot = Bot(TOKEN, parse_mode=ParseMode.HTML)
+bot = Bot(TOKEN, parse_mode=ParseMode.HTML) # , session=session)
 dp = Dispatcher(storage=storage)
 
 centraliz = None
@@ -89,6 +91,7 @@ async def parse_central(message: Message):
     centraliz = centr_list
     for i in centr_list:
         await message.answer(f'{i[3]}-{i[4]}')
+        print(i)
         builder_inline = InlineKeyboardBuilder()
         builder_inline.add(InlineKeyboardButton(text='Choice', callback_data=f'choice {i[3]} {i[4]}'))
         await message.answer('^^^', reply_markup=builder_inline.as_markup())
