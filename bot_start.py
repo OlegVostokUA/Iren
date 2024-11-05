@@ -2,6 +2,7 @@ import asyncio
 import logging
 import sys
 from datetime import datetime
+import copy
 
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.client.session.aiohttp import AiohttpSession
@@ -13,8 +14,8 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 import requests
-from admin_keyboards import main_keyboard, task_keyboard, parse_keyboard, food_intake_menu_admin
-from client_keyboards import main_keyboard_cl, food_intake_menu, food_marks_menu
+from admin_keyboards import main_keyboard, task_keyboard, parse_keyboard, div_keyboard_admin
+from client_keyboards import main_keyboard_cl, food_intake_menu, food_marks_menu, div_keyboard
 from google.google_functions import func_parce_foul, func_parce_short, func_parse_central
 from parsing.parsing_functions import parse_prices
 from database.sq_lite_db import sql_start, add_to_db, read_db, select_marks
@@ -29,17 +30,19 @@ dp = Dispatcher(storage=storage)
 
 centraliz = None
 ADMIN_ID = 1064924678
+SUBADMIN_ID = 6213595759
 
 
 # finite state machine class
 class FSMClientFoodRating(StatesGroup):
+    div_intake = State()
     food_intake = State()
     mark = State()
 
 
 @dp.message(CommandStart())
 async def command_start(message: Message):
-    if message.from_user.id == ADMIN_ID:
+    if message.from_user.id == ADMIN_ID or message.from_user.id == SUBADMIN_ID:
         await message.answer(f'Hello, {message.from_user.full_name}', reply_markup=main_keyboard)
     else:
         await message.answer(f'Доброго дня, {message.from_user.full_name}!\n'
@@ -104,62 +107,90 @@ async def choice_central(callback: types.CallbackQuery):
     for i in centraliz:
         if query[0] in i and query[1] in i:
             text = i
-    text_for_msg = f'1493\nВідповідно до розп. АДПСУ №{text[0]} від {text[1]} отримано від {text[2]} {text[3]} - {text[4]}.\nЯкість відповідає вимогам.'
+    text_for_msg = f'1493\nВідповідно до розп. АДПСУ №{text[0]} від {text[1]} отримано від {text[2]} {text[3]} - {text[4]} кг.\nЯкість відповідає вимогам.'
     await callback.message.answer(text_for_msg)
 
 
 @dp.message(Command('Food_marks'))
 async def marks_keyboard_func(message: Message):
-    await message.answer('Ok', reply_markup=food_intake_menu_admin)
+    await message.answer('Ok', reply_markup=div_keyboard_admin)
 
 
-@dp.message(F.text == 'Сніданок.')
-@dp.message(F.text == 'Обід.')
-@dp.message(F.text == 'Вечеря.')
+@dp.message(F.text == 'УПЗ.')
+@dp.message(F.text == 'В.Бистра.')
+@dp.message(F.text == 'Стужиця.')
+@dp.message(F.text == 'Стужиця.')
+@dp.message(F.text == 'Княгиня.')
+@dp.message(F.text == 'В.Березний.')
+@dp.message(F.text == 'Новоселиця.')
+@dp.message(F.text == 'Камяниця.')
+@dp.message(F.text == 'Гута.')
+@dp.message(F.text == 'Оноківці.')
+@dp.message(F.text == 'Ужгород.')
+@dp.message(F.text == 'П.Комарівці.')
+@dp.message(F.text == 'Соломонове.')
+@dp.message(F.text == 'Саловка.')
+@dp.message(F.text == 'НМК"Вогник".')
 async def marks_parse_func(message: Message):
-    food_intake = message.text[:-1]
-    data = read_db(food_intake)
+    div_intake = message.text[:-1]
+    data = read_db(div_intake)
     marks = []
     count = 0
     sum = 0
     for i in data:
-        msg_line = f'{i[3]} - {i[2]}\n'
+        msg_line = f'{i[4]}: {i[2]} - {i[3]}\n'
         marks.append(msg_line)
-        if i[2] not in [1,2,3,4,5]:
+        if i[3] not in [1,2,3,4,5]:
             continue
         else:
             count += 1
-            sum = sum + i[2]
+            sum = sum + i[3]
     try:
         middle_mark = round(sum / count, 1)
     except:
         middle_mark = 0
     marks.append(f'\nСередній бал: {middle_mark}')
     text_for_msg = ''.join(marks)
-    await message.answer(text_for_msg, reply_markup=food_intake_menu_admin)
+    await message.answer(text_for_msg, reply_markup=div_keyboard_admin)
 
 
 @dp.message(Command('Marks_for_month'))
 async def middle_marks(message: Message):
-    data = select_marks()
-    date = data[0][0]
-    string_of_marks = ''
-    count = 0
-    mark = 0
-    for i in data:
+    query = select_marks()
+    global_list = []
+    inner_list = []
+    
+    date = query[0][0]
+    
+    for i in query:
         if date == i[0]:
-            count += 1
-            mark += i[1]
+            inner_list.append(i)
         else:
-            midle_mark = str(round(mark / count, 2))
-            string_of_marks += date + ': ' + midle_mark + '\n'
+            res = copy.copy(inner_list)
+            global_list.append(res)
+            inner_list.clear()
+            inner_list.append(i)
             date = i[0]
-            count = 1
-            mark = 0
-            mark += i[1]
-    midle_mark = str(round(mark / count, 2))
-    string_of_marks += date + ': ' + midle_mark + '\n'
-    await message.answer(string_of_marks, reply_markup=food_intake_menu_admin)
+    global_list.append(inner_list)
+
+    string_of_marks = 'Marks:\n'
+    date = global_list[0][0][0]
+    string_of_marks = string_of_marks + ' [ ' + date + ' ] ' + '\n'
+    for data in global_list:
+        my_dict = {}
+        for i in data:
+            my_dict[i[1]] = my_dict.get(i[1], []) + [i[2]]
+
+        if date != data[0][0]:
+            date = data[0][0]
+            string_of_marks = string_of_marks + ' [ ' + date + ' ] ' + '\n'
+
+        for i in my_dict.items():
+            mean = round(sum(i[1]) / len(i[1]), 1)
+            string_of_marks = string_of_marks + i[0] + '-' + str(mean) + '\n'
+
+    #print(string_of_marks)
+    await message.answer(string_of_marks, reply_markup=div_keyboard_admin)
 
 
 # # # CLIENT FUNCTIONS # # #
@@ -174,6 +205,13 @@ async def help_client(message: Message):
 
 @dp.message(Command('Оцінити'))
 async def rated_food_start(message: Message, state: FSMContext):
+    await state.set_state(FSMClientFoodRating.div_intake)
+    await message.answer('Оберіть підрозділ', reply_markup=div_keyboard)
+
+
+@dp.message(FSMClientFoodRating.div_intake)
+async def div_intake_load(message: Message, state: FSMContext):
+    await state.update_data(div_intake=message.text)
     await state.set_state(FSMClientFoodRating.food_intake)
     await message.answer('Оберіть прийом їжі, який хотіли би оцінити', reply_markup=food_intake_menu)
 
@@ -197,6 +235,7 @@ async def mark_load(message: Message, state: FSMContext):
     except:
         name_tg = ('UNKNOWN',)
     data = (datetime.today().strftime("%d.%m.%Y"),) + tuple(data.values()) + name_tg
+    # print(data)
     add_to_db(data)
     await state.clear()
     await message.answer('Дякуємо за вашу оцінку.\nЦе дуже важливо для нас', reply_markup=main_keyboard_cl)
